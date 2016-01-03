@@ -4,7 +4,7 @@ var util = require('util');
 exports.toLine = function toLine(event) {
   if (event.name.indexOf(' ') !== -1)
     throw Error(util.format('Invalid event name `%s`', event.name));
-  return util.format('%d %s %j', event.timestamp, event.name, event.payload);
+  return util.format('%d %s %j', event.timestamp, event.name, event.data);
 };
 
 
@@ -16,10 +16,10 @@ exports.fromLine = function fromLine(line) {
 
   var timestampStr = line.substr(0, firstSpaceIndex);
   var name = line.substr(firstSpaceIndex + 1, secondSpaceIndex - firstSpaceIndex - 1);
-  var payloadStr = line.substr(secondSpaceIndex + 1);
+  var dataStr = line.substr(secondSpaceIndex + 1);
   return {
     timestamp: parseInt(timestampStr),
     name: name,
-    payload: JSON.parse(payloadStr),
+    data: JSON.parse(dataStr),
   };
 };

@@ -24,9 +24,9 @@ function Log(filename) {
  */
 Log.prototype.add = function addLogEntry(entry) {
   if (typeof entry !== "string")
-    throw Error("Payload is not a string");
+    throw Error("Entry is not a string");
   if (entry.indexOf(this.delimeter) !== -1)
-    throw Error("Payload contains the delimter '" + this.delimeter + "'");
+    throw Error("Entry contains the delimter '" + this.delimeter + "'");
   fs.appendFile(this.appendFile, entry + this.delimeter, throwError);
 };
 
@@ -49,4 +49,3 @@ Log.prototype.read = function readLog(func, done) {
 function throwError(err) { 
   if (err) throw err; 
 }
-

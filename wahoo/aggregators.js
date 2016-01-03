@@ -51,7 +51,7 @@ function AggregatorPool(aggregatorMap) {
     });
   });
 
-  // TODO: topologically sort aggregators
+  // TODO: topologically sort aggregators based on injectables
 }
 
 function pluckValue(a) { return a.value; }
@@ -61,9 +61,9 @@ function pluckValue(a) { return a.value; }
  */
 AggregatorPool.prototype.aggregate = function aggregateEvent(event) {
   var extraModules = {
-    $d: {value: event.payload},
-    $t: {value: event.timestamp},
-    $n: {value: event.name},
+    $data: {value: event.data},
+    $timestamp: {value: event.timestamp},
+    $name: {value: event.name},
   };
 
   var injector = this.injector;

@@ -1,6 +1,6 @@
 var assert = require('chai').assert;
 
-var events = require('../events');
+var events = require('../event');
 
 var event = {
   timestamp: Date.now(),

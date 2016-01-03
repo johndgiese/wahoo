@@ -2,16 +2,17 @@ var assert = require('chai').assert;
 
 var Injector = require('../Injector');
 
+var injector;
+
+var args = {
+  a: 'hello',
+  b: 'world',
+};
+function injectable(a, b) { return a + b; }
+
 
 describe("The Injector", function() {
   describe("invoke method", function() {
-    var injector;
-    var args = {
-      a: 'hello',
-      b: 'world',
-    };
-    function injectable(a, b) { return a + b; }
-
     beforeEach(function() {
       injector = new Injector(args);
     })
@@ -31,4 +32,11 @@ describe("The Injector", function() {
       assert.equal(result, 'm&mworld');
     });
   });
+
+  it("lets you customize how values are injected.", function() {
+    function doubler(a) { return a + a; }
+    doublingInjector = new Injector(args, doubler);
+    var result = doublingInjector.invoke(injectable);
+    assert.equal(result, 'hellohelloworldworld');
+  })
 });

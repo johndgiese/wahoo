@@ -8,8 +8,9 @@ function extractArgNames(func) {
   return _.map(argsWithSpaces, function(s) { return s.trim(); });
 }
 
-function Injector(modules) {
+function Injector(modules, preprocessor) {
   this.modules = modules;
+  this.preprocessor = preprocessor ? preprocessor : _.identity;
 }
 
 Injector.prototype.invoke = function invoke(func, staticArgs, extraModules) {
@@ -38,7 +39,7 @@ Injector.prototype.invoke = function invoke(func, staticArgs, extraModules) {
     } else {
       nextArg = this.modules[nextArgName];
     }
-    args.push(nextArg);
+    args.push(this.preprocessor(nextArg));
   }
 
   return func.apply(null, args);

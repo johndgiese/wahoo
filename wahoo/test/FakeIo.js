@@ -1,3 +1,4 @@
+var _ = require('underscore');
 var assert = require('chai').assert;
 
 var FakeIo = require('../FakeIo');
@@ -25,12 +26,43 @@ describe("The FakeIo module", function() {
       });
     });
 
-    it("recieves events emitted by the server.", function() {
+    it("receives events emitted by the server.", function() {
       client1 = io.client();
       client2 = io.client();
       io.emit('test', 4);
       assert.deepEqual(client1.messages[0], {name: 'test', data: 4});
       assert.deepEqual(client2.messages[0], {name: 'test', data: 4});
+    });
+
+    it("can join groups, and receive events emitted to it.", function() {
+      io.on('connection', function(socket) {
+        socket.join('all');
+        
+        socket.on('ping', function(group, ack) {
+          socket.to(group).emit('ping', socket.id, _.identity);
+          ack(true);
+        });
+      });
+
+      client1 = io.client();
+      client2 = io.client();
+
+      client1.emit('ping', 'all', _.identity);
+      client2.emit('ping', 'all', _.identity);
+      client1.emit('ping', '2', _.identity);
+      client2.emit('ping', '1', _.identity);
+
+      assert.deepEqual(client1.messages, [
+        {name: 'ping', data: 1},
+        {name: 'ping', data: 2},
+        {name: 'ping', data: 2},
+      ]);
+
+      assert.deepEqual(client2.messages, [
+        {name: 'ping', data: 1},
+        {name: 'ping', data: 2},
+        {name: 'ping', data: 1},
+      ]);
     });
   });
 });

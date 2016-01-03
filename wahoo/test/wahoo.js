@@ -50,7 +50,7 @@ describe("The Wahoo", function() {
       .on('count', averageValue);
     });
 
-    it("will aggregate any existing events.", function(done) {
+    it("will aggregate existing events in the log.", function(done) {
       var fakeIo = new FakeIo();
 
       wahoo.log.add('1 count 5');
@@ -62,13 +62,14 @@ describe("The Wahoo", function() {
       });
     });
 
-    it("will aggregate new incoming events.", function() {
+    it("will aggregate incoming events.", function(done) {
       var fakeIo = new FakeIo();
 
       wahoo.setup(fakeIo, function() {
-        client.emit('event', {name: 'count', data: 5});
-        client.emit('event', {name: 'count', data: 5});
-        client.emit('event', {name: 'count', data: 20});
+        client = fakeIo.client();
+        client.emit('event', {name: 'count', data: 5}, _.identity);
+        client.emit('event', {name: 'count', data: 5}, _.identity);
+        client.emit('event', {name: 'count', data: 20}, _.identity);
         assertWahooStateGood(wahoo, done);
       });
     });

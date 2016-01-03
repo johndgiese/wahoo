@@ -108,12 +108,12 @@ Wahoo.prototype.handleEvent = function(rawData, ack) {
     var eventPreData = rawData.data;
     var eventName = rawData.name;
 
-    var preProcessEvent = this.eventDescriptors[eventName];
+    var pre = this.eventDescriptors[eventName].pre;
     var extraModules = {
       $data: {value: eventData},
       $name: {value: eventName},
     };
-    var eventData = injector.invoke(preProcessEvent, [eventPreData], extraModules);
+    var eventData = this.aggregatorInjector.invoke(pre, [eventPreData], extraModules);
   } catch (err) {
     ack({error: err.message});
     return;
@@ -138,7 +138,7 @@ Wahoo.prototype.setupDispatch = function(socket) {
   socket.on('event', function(rawData, ack) {
     var event = self.handleEvent(rawData, ack);
     if (event) {
-      socket.broadcast.in(event.name).emit(event.name, event);
+      socket.to(event.name).emit(event.name, event);
     }
   });
 

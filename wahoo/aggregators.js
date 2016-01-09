@@ -38,23 +38,31 @@ Aggregator.prototype.on = function registerListener(eventName, listener) {
  * depends on.  Of course this means there can not be circular dependencies.
  */
 function AggregatorPool(aggregatorMap) {
-  this.injector = new Injector(aggregatorMap, pluckValue);
-  this.listenerQueues = listenerQueues = {};
-
-  _.each(aggregatorMap, function(aggregator, aggregatorName) {
-    _.each(aggregator.listenerMap, function(listener, eventName) {
-      if (eventName in listenerQueues) {
-        listenerQueues[eventName].push(aggregator);
-      } else {
-        listenerQueues[eventName] = [aggregator];
-      }
-    });
-  });
-
-  // TODO: topologically sort aggregators based on injectables
+  this.injector = new Injector({}, pluckValue);
+  this.listenerQueues = {};
+  _.each(aggregatorMap || {}, this.add, this);
 }
 
+
+/**
+ * Add an aggregator to an existing pool.
+ */
+AggregatorPool.prototype.add = function addAggregator(aggregator, aggregateName) {
+  var self = this;
+  self.injector.modules[aggregateName] = aggregator;
+  // TODO: keep everything topologically sorted
+  _.each(aggregator.listenerMap, function(listener, eventName) {
+    if (eventName in self.listenerQueues) {
+      self.listenerQueues[eventName].push(aggregator);
+    } else {
+      self.listenerQueues[eventName] = [aggregator];
+    }
+  });
+};
+
+
 function pluckValue(a) { return a.value; }
+
 
 /**
  * Aggregate the effects of the event on the pool.
@@ -72,3 +80,5 @@ AggregatorPool.prototype.aggregate = function aggregateEvent(event) {
     a.value = injector.invoke(a.listenerMap[event.name], [a.value], extraModules);
   });
 };
+
+

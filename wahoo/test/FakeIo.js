@@ -29,9 +29,16 @@ describe("The FakeIo module", function() {
     it("receives events emitted by the server.", function() {
       client1 = io.client();
       client2 = io.client();
+      client1.on('test', function(data) {
+        assert.equal(data, 4);
+      });
+      client2.on('test', function(data) {
+        assert.equal(data, 4);
+      });
       io.emit('test', 4);
       assert.deepEqual(client1.messages[0], {name: 'test', data: 4});
       assert.deepEqual(client2.messages[0], {name: 'test', data: 4});
+
     });
 
     it("can join groups, and receive events emitted to it.", function() {
@@ -62,6 +69,21 @@ describe("The FakeIo module", function() {
         {name: 'ping', data: 1},
         {name: 'ping', data: 2},
         {name: 'ping', data: 1},
+      ]);
+    });
+
+    it("can only join groups once.", function() {
+      io.on('connection', function(socket) {
+        socket.join('all');
+        socket.join('all');
+      })
+
+      client = io.client();
+
+      io.to('all').emit('hello', 1, _.identity);
+
+      assert.deepEqual(client.messages, [
+        {name: 'hello', data: 1},
       ]);
     });
   });

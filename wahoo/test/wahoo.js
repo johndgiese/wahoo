@@ -4,6 +4,7 @@ var _ = require('underscore');
 var assert = require('chai').assert;
 
 var Wahoo = require('../index');
+var Mahoo = require('../Mahoo');
 var FakeIo = require('../FakeIo');
 
 
@@ -40,7 +41,11 @@ describe("The Wahoo", function() {
   });
 
   describe("once it is running", function() {
+    var fakeIo;
+
     beforeEach(function() {
+      fakeIo = new FakeIo();
+
       wahoo.event('count', counter);
 
       wahoo.aggregate('sum', 0)
@@ -51,8 +56,6 @@ describe("The Wahoo", function() {
     });
 
     it("will aggregate existing events in the log.", function(done) {
-      var fakeIo = new FakeIo();
-
       wahoo.log.add('1 count 5');
       wahoo.log.add('2 count 5');
       wahoo.log.add('3 count 20');
@@ -63,14 +66,24 @@ describe("The Wahoo", function() {
     });
 
     it("will aggregate incoming events.", function(done) {
-      var fakeIo = new FakeIo();
-
       wahoo.setup(fakeIo, function() {
-        client = fakeIo.client();
-        client.emit('event', {name: 'count', data: 5}, _.identity);
-        client.emit('event', {name: 'count', data: 5}, _.identity);
-        client.emit('event', {name: 'count', data: 20}, _.identity);
+        var clientSocket = fakeIo.client();
+        clientSocket.emit('event', {name: 'count', data: 5}, _.identity);
+        clientSocket.emit('event', {name: 'count', data: 5}, _.identity);
+        clientSocket.emit('event', {name: 'count', data: 20}, _.identity);
         assertWahooStateGood(wahoo, done);
+      });
+    });
+
+    it("will let client's subscribe to aggregates.", function() {
+      wahoo.setup(fakeIo, function() {
+        var mahooOne = new Mahoo(fakeIo.client());
+        var mahooTwo = new Mahoo(fakeIo.client());
+        assert.equal(mahooOne.aggregates.sum, undefined);
+        mahooOne.subscribe('sum');
+        assert.equal(mahooOne.aggregates.sum, 0);
+        mahooTwo.emit('count', 5);
+        assert.equal(mahooOne.aggregates.sum, 5);
       });
     });
   });

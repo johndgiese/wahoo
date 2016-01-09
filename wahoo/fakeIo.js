@@ -20,17 +20,28 @@ FakeIo.prototype.on = function onIo(eventName, handler) {
 };
 
 
-FakeIo.prototype.emit = function emitIo(eventName, data, group) {
+FakeIo.prototype.emit = function emitIo(eventName, data, groupName) {
   var sockets;
-  if (group) {
-    sockets = this.groups[group] || [];
+  if (groupName) {
+    sockets = this.groups[groupName] || [];
   } else {
     sockets = this.sockets;
   }
 
   sockets.forEach(function(s) {
     s.client.messages.push({name: eventName, data: data});
+    if (eventName in s.client.listenerMap) {
+      s.client.listenerMap[eventName](data);
+    }
   });
+};
+
+
+FakeIo.prototype.to = function broadcastToIo(groupName) {
+  var self = this;
+  return {emit: function(eventName, data) {
+    self.emit(eventName, data, groupName);
+  }};
 };
 
 
@@ -73,20 +84,24 @@ FakeSocket.prototype.emit = function emitSocket(eventName, data) {
 }
 
 
-FakeSocket.prototype.to = function broadcastTo(group) {
+FakeSocket.prototype.to = function broadcastToSocket(groupName) {
   var self = this;
   return {emit: function(eventName, data) {
-    self.io.emit(eventName, data, group);
+    self.io.emit(eventName, data, groupName);
   }};
 };
 
 
-FakeSocket.prototype.join = function join(group) {
-  var existingGroup = this.io.groups[group]
+FakeSocket.prototype.join = function join(groupName) {
+  var groups = this.io.groups
+  var existingGroup = groups[groupName];
   if (existingGroup) {
-    existingGroup.push(this);
+    var alreadyJoinedGroup = existingGroup.indexOf(this) !== -1;
+    if (!alreadyJoinedGroup) {
+      existingGroup.push(this);
+    }
   } else {
-    this.io.groups[group] = [this];
+    groups[groupName] = [this];
   }
 };
 
@@ -98,6 +113,7 @@ FakeSocket.prototype.leave = function leave(group) {
 
 function FakeClient() {
   this.messages = [];
+  this.listenerMap = {};
 }
 
 
@@ -113,5 +129,16 @@ FakeClient.prototype.emit = function emitClient(eventName, data, ack) {
     if (ack) {
       throw new Error('Not sure how socket.io handles this');
     }
+  }
+};
+
+
+FakeClient.prototype.on = function onClient(eventName, listener) {
+  var self = this;
+  //console.log("listening to " + eventName + " on " + self.socket.id);
+  this.listenerMap[eventName] = function(data) {
+    //console.log("recieved " + eventName + " on " + self.socket.id);
+    //console.log(data);
+    listener(data);
   }
 };

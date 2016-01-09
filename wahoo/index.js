@@ -142,7 +142,21 @@ Wahoo.prototype.setupDispatch = function(socket) {
     }
   });
 
-  socket.on('listen', function(aggregatorName, ack) {
-    // TODO: allow the client to listen to objects
+  socket.on('subscribe', function(aggregatorName, ack) {
+    // TODO: only send over the ones that you actually need
+    var aggregators = _.map(self.aggregatorMap, function(aggregator, aggregatorName) {
+      var listenerMap = {};
+      _.each(aggregator.listenerMap, function(listenerFunction, eventName) {
+        listenerMap[eventName] = String(listenerFunction);
+        socket.join(eventName);
+      });
+
+      return {
+        name: aggregatorName,
+        value: aggregator.value,
+        listenerMap: listenerMap,
+      };
+    });
+    ack(aggregators);
   });
 };
